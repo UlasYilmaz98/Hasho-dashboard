@@ -269,6 +269,39 @@
             background: rgba(239, 68, 68, 0.2);
         }
 
+        /* Date Shortcuts */
+        .date-shortcuts {
+            display: flex;
+            gap: 4px;
+            padding: 3px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .shortcut-btn {
+            padding: 6px 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .shortcut-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .shortcut-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
         /* Main Content */
         .main-content {
             max-width: 1600px;
@@ -703,11 +736,17 @@
                 </div>
                 
                 <div class="header-right">
+                    <div class="date-shortcuts">
+                        <button class="shortcut-btn" onclick="setDateRange('today')" data-range="today">Today</button>
+                        <button class="shortcut-btn" onclick="setDateRange('7days')" data-range="7days">7 Days</button>
+                        <button class="shortcut-btn" onclick="setDateRange('14days')" data-range="14days">14 Days</button>
+                        <button class="shortcut-btn active" onclick="setDateRange('30days')" data-range="30days">30 Days</button>
+                    </div>
                     <div class="date-range">
                         <input type="date" id="startDate">
                         <span style="color: var(--text-muted)">to</span>
                         <input type="date" id="endDate">
-                        <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">Apply</button>
+                        <button class="btn btn-secondary btn-sm" onclick="applyCustomDateRange()">Apply</button>
                     </div>
                     <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">🔄 Refresh</button>
                     <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
@@ -1032,6 +1071,47 @@
             
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('dashboardScreen').style.display = 'none';
+        }
+
+        function setDateRange(range) {
+            const today = new Date();
+            let startDate = new Date();
+            
+            switch(range) {
+                case 'today':
+                    startDate = new Date(today);
+                    break;
+                case '7days':
+                    startDate.setDate(today.getDate() - 7);
+                    break;
+                case '14days':
+                    startDate.setDate(today.getDate() - 14);
+                    break;
+                case '30days':
+                    startDate.setDate(today.getDate() - 30);
+                    break;
+            }
+            
+            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            
+            // Update active button
+            document.querySelectorAll('.shortcut-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.range === range) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            loadDashboard();
+        }
+
+        function applyCustomDateRange() {
+            // Clear active state from shortcut buttons when custom range is applied
+            document.querySelectorAll('.shortcut-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            loadDashboard();
         }
 
         async function showDashboard() {
