@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hasho Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #334155;
+            --gradient-1: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            --gradient-2: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
+            --gradient-3: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+            --gradient-4: linear-gradient(135deg, #ef4444 0%, #ec4899 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Login Screen */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1a2e 100%);
+        }
+
+        .login-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-logo h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .login-logo p {
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: var(--gradient-1);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* Dashboard Layout */
+        .dashboard-container {
+            display: none;
+        }
+
+        .header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .server-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: var(--bg-dark);
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .server-info .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .date-range {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .date-range input {
+            padding: 8px 12px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .date-range input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .btn-secondary {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .stat-card.purple::before { background: var(--gradient-1); }
+        .stat-card.green::before { background: var(--gradient-2); }
+        .stat-card.orange::before { background: var(--gradient-3); }
+        .stat-card.red::before { background: var(--gradient-4); }
+
+        .stat-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .stat-card-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .stat-card.purple .stat-card-icon { background: rgba(99, 102, 241, 0.2); }
+        .stat-card.green .stat-card-icon { background: rgba(16, 185, 129, 0.2); }
+        .stat-card.orange .stat-card-icon { background: rgba(245, 158, 11, 0.2); }
+        .stat-card.red .stat-card-icon { background: rgba(239, 68, 68, 0.2); }
+
+        .stat-card-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-card-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .chart-container.small {
+            height: 250px;
+        }
+
+        /* Tables */
+        .table-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 14px 24px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        td {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+        }
+
+        .status-badge.failed {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+        }
+
+        .status-badge.processing {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+        }
+
+        .status-badge.pending {
+            background: rgba(99, 102, 241, 0.1);
+            color: #a5b4fc;
+        }
+
+        .score-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .score-badge.high {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .score-badge.medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .score-badge.low {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        /* Loading State */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Sections */
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1200px) {
+            .grid-3 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Feedback Message */
+        .feedback-message {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-right {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .date-range {
+                width: 100%;
+            }
+
+            .date-range input {
+                flex: 1;
+            }
+
+            .main-content {
+                padding: 16px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-container" id="loginScreen">
+        <div class="login-card">
+            <div class="login-logo">
+                <h1>🏠 Hasho</h1>
+                <p>Analytics Dashboard</p>
+            </div>
+            
+            <div class="error-message" id="loginError"></div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="serverUrl">Server URL</label>
+                    <input type="url" id="serverUrl" placeholder="https://api.hasho.app" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="apiKey">API Key</label>
+                    <input type="password" id="apiKey" placeholder="Enter your analytics API key" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="loginBtn">
+                    <span>Connect to Dashboard</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard-container" id="dashboardScreen">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo">🏠 Hasho Analytics</div>
+                    <div class="server-info">
+                        <span class="status-dot"></span>
+                        <span id="connectedServer">Connected</span>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="date-range">
+                        <input type="date" id="startDate">
+                        <span style="color: var(--text-muted)">to</span>
+                        <input type="date" id="endDate">
+                        <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">Apply</button>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">🔄 Refresh</button>
+                    <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" data-tab="overview">Overview</button>
+                <button class="tab" data-tab="tasks">Tasks</button>
+                <button class="tab" data-tab="feedback">Feedback</button>
+            </div>
+
+            <!-- Overview Tab -->
+            <div class="tab-content active" id="overviewTab">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card purple">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Total Users</span>
+                            <div class="stat-card-icon">👥</div>
+                        </div>
+                        <div class="stat-card-value" id="totalUsers">-</div>
+                        <div class="stat-card-subtitle">
+                            <span id="activeUsers7d">-</span> active (7d) · <span id="activeUsers30d">-</span> active (30d)
+                        </div>
+                    </div>
+
+                    <div class="stat-card green">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Total Tasks</span>
+                            <div class="stat-card-icon">🎨</div>
+                        </div>
+                        <div class="stat-card-value" id="totalTasks">-</div>
+                        <div class="stat-card-subtitle">
+                            <span id="successRate">-</span>% success rate
+                        </div>
+                    </div>
+
+                    <div class="stat-card orange">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Avg Duration</span>
+                            <div class="stat-card-icon">⏱️</div>
+                        </div>
+                        <div class="stat-card-value" id="avgDuration">-</div>
+                        <div class="stat-card-subtitle">seconds per task</div>
+                    </div>
+
+                    <div class="stat-card red">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Total Feedbacks</span>
+                            <div class="stat-card-icon">⭐</div>
+                        </div>
+                        <div class="stat-card-value" id="totalFeedbacks">-</div>
+                        <div class="stat-card-subtitle">
+                            Avg score: <span id="avgScore">-</span>/5
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">📈 User Registrations</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="registrationsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">📊 Tasks Over Time</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="tasksChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">🎯 Task Categories</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">📍 Task Status Distribution</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks Tab -->
+            <div class="tab-content" id="tasksTab">
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">✅ Success Rate Over Time</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="successRateChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">🕐 Tasks by Hour</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="hourlyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">🤖 AI Provider Distribution</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="providerChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">❌ Failure Reasons</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="failureChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Tasks Table -->
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3 class="table-title">🕒 Recent Tasks</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="loadRecentTasks()">Refresh</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Task ID</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTasksBody">
+                                <tr>
+                                    <td colspan="4" class="empty-state">
+                                        <div class="empty-state-icon">📋</div>
+                                        <div class="empty-state-text">No tasks found</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback Tab -->
+            <div class="tab-content" id="feedbackTab">
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">⭐ Score Distribution</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="scoreDistChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">📊 Feedback by Category</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="feedbackCategoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Feedbacks Table -->
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3 class="table-title">💬 Recent Feedbacks</h3>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Task ID</th>
+                                    <th>Category</th>
+                                    <th>Score</th>
+                                    <th>Message</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentFeedbacksBody">
+                                <tr>
+                                    <td colspan="5" class="empty-state">
+                                        <div class="empty-state-icon">💬</div>
+                                        <div class="empty-state-text">No feedbacks found</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // State
+        let serverUrl = '';
+        let apiKey = '';
+        let charts = {};
+        let dashboardData = null;
+
+        // Chart default options
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = '#334155';
+        Chart.defaults.font.family = 'Inter, sans-serif';
+
+        const chartColors = {
+            primary: '#6366f1',
+            success: '#10b981',
+            warning: '#f59e0b',
+            danger: '#ef4444',
+            purple: '#8b5cf6',
+            cyan: '#06b6d4',
+            pink: '#ec4899',
+            lime: '#84cc16'
+        };
+
+        const colorPalette = Object.values(chartColors);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for saved credentials
+            const saved = localStorage.getItem('hasho_analytics');
+            if (saved) {
+                const { url, key } = JSON.parse(saved);
+                serverUrl = url;
+                apiKey = key;
+                document.getElementById('serverUrl').value = url;
+                showDashboard();
+            }
+
+            // Set default date range (last 30 days)
+            const today = new Date();
+            const thirtyDaysAgo = new Date(today);
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.tab + 'Tab').classList.add('active');
+                });
+            });
+
+            // Login form
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await login();
+            });
+        });
+
+        async function login() {
+            serverUrl = document.getElementById('serverUrl').value.replace(/\/$/, '');
+            apiKey = document.getElementById('apiKey').value;
+
+            showLoading();
+            hideError();
+
+            try {
+                const response = await fetchApi('/api/Analytics/Dashboard');
+                
+                // Handle both response formats: isSuccess (actual) or success
+                if (response.isSuccess || response.success) {
+                    localStorage.setItem('hasho_analytics', JSON.stringify({ url: serverUrl, key: apiKey }));
+                    showDashboard();
+                } else {
+                    showError(response.message || 'Authentication failed');
+                }
+            } catch (error) {
+                showError('Failed to connect: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('hasho_analytics');
+            serverUrl = '';
+            apiKey = '';
+            document.getElementById('apiKey').value = '';
+            
+            // Destroy all charts
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+            
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('dashboardScreen').style.display = 'none';
+        }
+
+        async function showDashboard() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboardScreen').style.display = 'block';
+            document.getElementById('connectedServer').textContent = new URL(serverUrl).hostname;
+            
+            await loadDashboard();
+            await loadRecentTasks();
+        }
+
+        async function fetchApi(endpoint, params = {}) {
+            const url = new URL(serverUrl + endpoint);
+            Object.keys(params).forEach(key => {
+                if (params[key] !== null && params[key] !== undefined) {
+                    url.searchParams.append(key, params[key]);
+                }
+            });
+
+            const response = await fetch(url.toString(), {
+                headers: {
+                    'X-Analytics-Key': apiKey,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    logout();
+                    throw new Error('Unauthorized');
+                }
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            return await response.json();
+        }
+
+        async function loadDashboard() {
+            showLoading();
+            
+            try {
+                const startDate = document.getElementById('startDate').value || null;
+                const endDate = document.getElementById('endDate').value || null;
+                
+                const response = await fetchApi('/api/Analytics/Dashboard', { startDate, endDate });
+                
+                // Handle both response formats: isSuccess (actual) or success
+                if (response.isSuccess || response.success) {
+                    dashboardData = response.data;
+                    updateDashboard(dashboardData);
+                } else {
+                    showError(response.message);
+                }
+            } catch (error) {
+                console.error('Dashboard error:', error);
+                showError('Failed to load dashboard: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function loadRecentTasks() {
+            try {
+                const response = await fetchApi('/api/Analytics/RecentTasks', { limit: 50 });
+                
+                // Handle both response formats: isSuccess (actual) or success
+                if (response.isSuccess || response.success) {
+                    updateRecentTasksTable(response.data.tasks);
+                }
+            } catch (error) {
+                console.error('Recent tasks error:', error);
+            }
+        }
+
+        function updateDashboard(data) {
+            // Overview Stats
+            document.getElementById('totalUsers').textContent = formatNumber(data.overview.totalUsers);
+            document.getElementById('totalTasks').textContent = formatNumber(data.overview.totalTasks);
+            document.getElementById('totalFeedbacks').textContent = formatNumber(data.overview.totalFeedbacks);
+            document.getElementById('avgScore').textContent = data.overview.averageFeedbackScore.toFixed(1);
+            document.getElementById('activeUsers7d').textContent = formatNumber(data.overview.activeUsersLast7Days);
+            document.getElementById('activeUsers30d').textContent = formatNumber(data.overview.activeUsersLast30Days);
+            document.getElementById('successRate').textContent = data.overview.taskSuccessRate.toFixed(1);
+            document.getElementById('avgDuration').textContent = data.overview.averageTaskDurationSeconds.toFixed(1);
+
+            // Update Charts
+            updateRegistrationsChart(data.userMetrics.registrationsByDate);
+            updateTasksChart(data.taskMetrics.tasksByDate);
+            updateCategoryChart(data.taskMetrics.categoryDistribution);
+            updateStatusChart(data.taskMetrics.statusDistribution);
+            updateSuccessRateChart(data.taskMetrics.successRateByDate);
+            updateHourlyChart(data.taskMetrics.tasksByHour);
+            updateProviderChart(data.taskMetrics.providerDistribution);
+            updateFailureChart(data.taskMetrics.failureReasons);
+            updateScoreDistChart(data.feedbackMetrics.scoreDistribution);
+            updateFeedbackCategoryChart(data.feedbackMetrics.feedbackByCategory);
+            updateRecentFeedbacksTable(data.feedbackMetrics.recentFeedbacks);
+        }
+
+        function updateRegistrationsChart(data) {
+            const ctx = document.getElementById('registrationsChart').getContext('2d');
+            
+            if (charts.registrations) charts.registrations.destroy();
+            
+            charts.registrations = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => formatDate(d.date)),
+                    datasets: [{
+                        label: 'Registrations',
+                        data: data.map(d => d.count),
+                        borderColor: chartColors.primary,
+                        backgroundColor: chartColors.primary + '20',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function updateTasksChart(data) {
+            const ctx = document.getElementById('tasksChart').getContext('2d');
+            
+            if (charts.tasks) charts.tasks.destroy();
+            
+            charts.tasks = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => formatDate(d.date)),
+                    datasets: [{
+                        label: 'Tasks',
+                        data: data.map(d => d.count),
+                        backgroundColor: chartColors.success + 'cc',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function updateCategoryChart(data) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            
+            if (charts.category) charts.category.destroy();
+            
+            charts.category = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(d => formatCategoryName(d.name)),
+                    datasets: [{
+                        data: data.map(d => d.count),
+                        backgroundColor: colorPalette.slice(0, data.length),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 16,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateStatusChart(data) {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            
+            if (charts.status) charts.status.destroy();
+            
+            const statusColors = {
+                'Completed': chartColors.success,
+                'Failed': chartColors.danger,
+                'Processing': chartColors.warning,
+                'Pending': chartColors.primary
+            };
+            
+            charts.status = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.map(d => d.name),
+                    datasets: [{
+                        data: data.map(d => d.count),
+                        backgroundColor: data.map(d => statusColors[d.name] || chartColors.purple),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 16,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateSuccessRateChart(data) {
+            const ctx = document.getElementById('successRateChart').getContext('2d');
+            
+            if (charts.successRate) charts.successRate.destroy();
+            
+            const rates = data.map(d => {
+                const total = d.completed + d.failed;
+                return total > 0 ? (d.completed / total * 100).toFixed(1) : 0;
+            });
+            
+            charts.successRate = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => formatDate(d.date)),
+                    datasets: [{
+                        label: 'Success Rate %',
+                        data: rates,
+                        borderColor: chartColors.success,
+                        backgroundColor: chartColors.success + '20',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: value => value + '%'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateHourlyChart(data) {
+            const ctx = document.getElementById('hourlyChart').getContext('2d');
+            
+            if (charts.hourly) charts.hourly.destroy();
+            
+            // Fill in missing hours
+            const hourlyData = Array(24).fill(0);
+            data.forEach(d => {
+                hourlyData[d.hour] = d.count;
+            });
+            
+            charts.hourly = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: hourlyData.map((_, i) => i.toString().padStart(2, '0') + ':00'),
+                    datasets: [{
+                        label: 'Tasks',
+                        data: hourlyData,
+                        backgroundColor: chartColors.cyan + 'cc',
+                        borderRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function updateProviderChart(data) {
+            const ctx = document.getElementById('providerChart').getContext('2d');
+            
+            if (charts.provider) charts.provider.destroy();
+            
+            charts.provider = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(d => d.name || 'Unknown'),
+                    datasets: [{
+                        data: data.map(d => d.count),
+                        backgroundColor: [chartColors.purple, chartColors.cyan, chartColors.warning, chartColors.pink],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 16,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateFailureChart(data) {
+            const ctx = document.getElementById('failureChart').getContext('2d');
+            
+            if (charts.failure) charts.failure.destroy();
+            
+            const sortedData = [...data].sort((a, b) => b.count - a.count).slice(0, 10);
+            
+            charts.failure = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedData.map(d => truncateText(d.name || 'Unknown', 30)),
+                    datasets: [{
+                        label: 'Count',
+                        data: sortedData.map(d => d.count),
+                        backgroundColor: chartColors.danger + 'cc',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function updateScoreDistChart(data) {
+            const ctx = document.getElementById('scoreDistChart').getContext('2d');
+            
+            if (charts.scoreDist) charts.scoreDist.destroy();
+            
+            // Fill in missing scores 1-5
+            const scores = [1, 2, 3, 4, 5];
+            const counts = scores.map(score => {
+                const found = data.find(d => d.score === score);
+                return found ? found.count : 0;
+            });
+            
+            const scoreColors = [
+                chartColors.danger,
+                chartColors.warning,
+                chartColors.lime,
+                chartColors.success,
+                chartColors.cyan
+            ];
+            
+            charts.scoreDist = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['⭐ 1', '⭐ 2', '⭐ 3', '⭐ 4', '⭐ 5'],
+                    datasets: [{
+                        label: 'Count',
+                        data: counts,
+                        backgroundColor: scoreColors.map(c => c + 'cc'),
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function updateFeedbackCategoryChart(data) {
+            const ctx = document.getElementById('feedbackCategoryChart').getContext('2d');
+            
+            if (charts.feedbackCategory) charts.feedbackCategory.destroy();
+            
+            charts.feedbackCategory = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => formatCategoryName(d.category)),
+                    datasets: [
+                        {
+                            label: 'Avg Score',
+                            data: data.map(d => d.averageScore),
+                            backgroundColor: chartColors.primary + 'cc',
+                            borderRadius: 4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Count',
+                            data: data.map(d => d.count),
+                            backgroundColor: chartColors.success + 'cc',
+                            borderRadius: 4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            beginAtZero: true,
+                            max: 5,
+                            title: {
+                                display: true,
+                                text: 'Avg Score'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            beginAtZero: true,
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Count'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateRecentTasksTable(tasks) {
+            const tbody = document.getElementById('recentTasksBody');
+            
+            if (!tasks || tasks.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <div class="empty-state-text">No tasks found</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = tasks.map(task => `
+                <tr>
+                    <td><code style="font-size: 11px; color: var(--text-muted);">${task.taskIdentifier.substring(0, 8)}...</code></td>
+                    <td>${formatCategoryName(task.category)}</td>
+                    <td><span class="status-badge ${task.status.toLowerCase()}">${task.status}</span></td>
+                    <td>${formatDateTime(task.createdOn)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateRecentFeedbacksTable(feedbacks) {
+            const tbody = document.getElementById('recentFeedbacksBody');
+            
+            if (!feedbacks || feedbacks.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-state-icon">💬</div>
+                            <div class="empty-state-text">No feedbacks found</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = feedbacks.map(fb => `
+                <tr>
+                    <td><code style="font-size: 11px; color: var(--text-muted);">${fb.taskIdentifier.substring(0, 8)}...</code></td>
+                    <td>${formatCategoryName(fb.category)}</td>
+                    <td><span class="score-badge ${getScoreClass(fb.score)}">${fb.score}</span></td>
+                    <td class="feedback-message">${fb.message || '-'}</td>
+                    <td>${formatDateTime(fb.createdOn)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Utility Functions
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function formatDateTime(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatCategoryName(name) {
+            if (!name) return 'Unknown';
+            // Convert PascalCase to readable format
+            return name.replace(/([A-Z])/g, ' $1').trim();
+        }
+
+        function truncateText(text, maxLength) {
+            if (!text) return '';
+            return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        }
+
+        function getScoreClass(score) {
+            if (score >= 4) return 'high';
+            if (score >= 3) return 'medium';
+            return 'low';
+        }
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('loginError');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('loginError').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
